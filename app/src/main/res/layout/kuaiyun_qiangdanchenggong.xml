@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center">
+
+        <ImageView
+            android:id="@+id/chenggong1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@mipmap/kuaiyun_chenggong" />
+
+        <TextView
+            android:id="@+id/chenggong2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/chenggong1"
+            android:layout_marginTop="-74dp"
+            android:layout_marginLeft="84dp"
+            android:text="抢单成功"
+            android:textColor="#000000"
+            android:textSize="18dp" />
+
+        <TextView
+            android:layout_centerHorizontal="true"
+            android:id="@+id/chenggong3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/chenggong2"
+            android:layout_marginTop="10dp"
+            android:text="点击查看订单详情"
+            android:textColor="#c31023"
+            android:textSize="15dp"/>
+
+        <View
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/chenggong3"
+            android:layout_alignLeft="@+id/chenggong3"
+            android:layout_alignRight="@+id/chenggong3"
+            android:background="#c31023"
+            android:layout_width="wrap_content"
+            android:layout_height="1dp"/>
+    </RelativeLayout>
+</LinearLayout>

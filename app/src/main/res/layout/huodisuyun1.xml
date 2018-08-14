@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:visibility="gone"
+        android:text="货滴速运"
+        android:textSize="18dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textColor="#000000"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:background="#FFFFFF"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/go_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="15dp"
+            android:padding="15dp"
+            android:src="@mipmap/go_back" />
+
+        <ImageView
+            android:layout_width="89dp"
+            android:layout_height="18dp"
+            android:layout_centerInParent="true"
+            android:layout_margin="10dp"
+            android:scaleType="fitXY"
+            android:src="@mipmap/huodisuyun" />
+    </RelativeLayout>
+
+    <com.lxwls.hdsjd.widgets.ColumnHorizontalScrollView
+        android:visibility="gone"
+        android:id="@+id/mColumnHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fadingEdge="none"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/mRadioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#dcd9d9"
+            android:gravity="center_vertical"
+            android:orientation="horizontal" />
+    </com.lxwls.hdsjd.widgets.ColumnHorizontalScrollView>
+
+    <android.support.design.widget.TabLayout
+        android:id="@+id/tab_layout"
+        app:tabSelectedTextColor="#c31023"
+        app:tabBackground="@drawable/tab_background"
+        app:tabTextColor="#a5a5a5"
+        app:tabIndicatorColor="#c31023"
+        android:layout_width="match_parent"
+        android:layout_height="50dp">
+    </android.support.design.widget.TabLayout>
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/viewpage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:background="#FFFFFF"></android.support.v4.view.ViewPager>
+
+</LinearLayout>

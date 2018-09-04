@@ -50,6 +50,7 @@ import com.lxwls.hdsjd.ui.activity.DriverCertificationStateActivity;
 import com.lxwls.hdsjd.ui.activity.DriverFriendActivity;
 import com.lxwls.hdsjd.ui.activity.DriverZhaoHuoActivity;
 import com.lxwls.hdsjd.ui.activity.EtcChongZhiActivity;
+import com.lxwls.hdsjd.ui.activity.FaBuShunFengCheActivity;
 import com.lxwls.hdsjd.ui.activity.HuoDKuaiyun1Activity;
 import com.lxwls.hdsjd.ui.activity.HuoDKuaiyunActivity;
 import com.lxwls.hdsjd.ui.activity.HuoDSuyun1Activity;
@@ -61,6 +62,7 @@ import com.lxwls.hdsjd.ui.activity.NewsListActivity;
 import com.lxwls.hdsjd.ui.activity.ProvinceActivity;
 import com.lxwls.hdsjd.ui.activity.ShangChengActivity;
 import com.lxwls.hdsjd.ui.activity.ShopActivity;
+import com.lxwls.hdsjd.ui.activity.ShuFengCheLieBiaoActivity;
 import com.lxwls.hdsjd.ui.activity.XiaZaiActivity;
 import com.lxwls.hdsjd.utils.BroadCastManager;
 import com.lxwls.hdsjd.utils.DialogHelper;
@@ -125,7 +127,7 @@ public class PrimaryFragment extends BaseFragment implements View.OnClickListene
     private int type;
     private ImageView img_etc;
 
-    private ImageView img_suyun,img_kuaiyun,img_shangcheng,img_xiazai,img_zixun,img_qianbao;
+    private ImageView img_suyun,img_kuaiyun,img_shangcheng,img_xiazai,img_zixun,img_qianbao,img_shunfengche,img_huodibaoxian;
     private TextView tv_weidu;
     private String sheng11="";
 
@@ -171,6 +173,8 @@ public class PrimaryFragment extends BaseFragment implements View.OnClickListene
         img_xiazai=findView(R.id.img_xiazai);
         img_zixun=findView(R.id.img_zixun);
         img_qianbao=findView(R.id.img_qianbao);
+        img_shunfengche=findView(R.id.img_shunfengche);
+        img_huodibaoxian=findView(R.id.img_huodibaoxian);
         tvLocation = findView(R.id.tv_location);
         scrollView = findView(R.id.scrollView);
         scrollView.setOnTouchListener(new TouchListenerImpl());
@@ -238,6 +242,8 @@ public class PrimaryFragment extends BaseFragment implements View.OnClickListene
         img_xiazai.setOnClickListener(this);
         img_zixun.setOnClickListener(this);
         img_qianbao.setOnClickListener(this);
+        img_shunfengche.setOnClickListener(this);
+        img_huodibaoxian.setOnClickListener(this);
         //接收广播
         try {
             IntentFilter filter = new IntentFilter();
@@ -619,6 +625,34 @@ public class PrimaryFragment extends BaseFragment implements View.OnClickListene
                             }
                         });
                 break;
+            case R.id.img_shunfengche:
+                SharedPreferences sharedPreferences=getContext().getSharedPreferences("userpassword", Context.MODE_PRIVATE);
+                String name = sharedPreferences.getString("name", "");
+                String password = sharedPreferences.getString("password", "");
+                if (name.equals("")||password.equals("")){
+                    DialogHelper.getConfirmDialog(getContext(), "温馨提示", "当前用户未登录，是否去登录", "去登录", "取消", true, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startActivity(new Intent(getContext(), LoginActivity.class));
+                        }
+                    }, null).show();
+                }else {
+                    requestLogin(name,password,4);
+                }
+
+                break;
+            case R.id.img_huodibaoxian:
+                AlertDialog.Builder builder=new AlertDialog.Builder(getContext())
+                        .setTitle("提示")
+                        .setMessage("正在开发中")
+                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                builder.show();
+                break;
         }
     }
 
@@ -669,6 +703,8 @@ public class PrimaryFragment extends BaseFragment implements View.OnClickListene
 //                                            initPanduan();
                                         }else if (i==3){
                                             startActivity(new Intent(getContext(), MywalletActivity.class));
+                                        }else if (i==4){
+                                            startActivity(new Intent(getContext(), ShuFengCheLieBiaoActivity.class));
                                         }
 
 //                                        MyJPushMessageReceiver myJPushMessageReceiver=new MyJPushMessageReceiver();

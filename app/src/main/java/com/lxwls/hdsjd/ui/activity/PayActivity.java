@@ -375,15 +375,15 @@ public class PayActivity extends BackCommonActivity {
         });
     }
 
-    private boolean isWXAppInstalledAndSupported() {
-        IWXAPI msgApi = WXAPIFactory.createWXAPI(this, null);
-        msgApi.registerApp(Constant.APP_ID);
-
-        boolean sIsWXAppInstalledAndSupported = msgApi.isWXAppInstalled()
-                && msgApi.isWXAppSupportAPI();
-
-        return sIsWXAppInstalledAndSupported;
-    }
+//    private boolean isWXAppInstalledAndSupported() {
+//        IWXAPI msgApi = WXAPIFactory.createWXAPI(this, null);
+//        msgApi.registerApp(Constant.APP_ID);
+//
+//        boolean sIsWXAppInstalledAndSupported = msgApi.isWXAppInstalled()
+//                && msgApi.isWXAppSupportAPI();
+//
+//        return sIsWXAppInstalledAndSupported;
+//    }
 
     /**
      * 微信支付广播

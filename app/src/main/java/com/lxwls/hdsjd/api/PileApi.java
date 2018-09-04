@@ -1020,5 +1020,30 @@ public class PileApi {
         return service.searchVehicleLength();
     }
 
+    //发布顺风车
+    public Observable<ResponseBody> addFreeRideTrip(String data) {
+        return service.addFreeRideTrip(data);
+    }
+
+    //顺风车列表
+    public Observable<ResponseBody> selectSelfFreeRideList() {
+        return service.selectSelfFreeRideList();
+    }
+
+    //顺风车详情
+    public Observable<ResponseBody> selectSelfFreeRideDet(String data) {
+        return service.selectSelfFreeRideDet(data);
+    }
+
+    //取消行程
+    public Observable<ResponseBody> cancelFreeRideTrip(String data) {
+        return service.cancelFreeRideTrip(data);
+    }
+
+    //顺风车检测司机信息
+    public Observable<ResponseBody> selDriverInfo() {
+        return service.selDriverInfo();
+    }
+
 
 }

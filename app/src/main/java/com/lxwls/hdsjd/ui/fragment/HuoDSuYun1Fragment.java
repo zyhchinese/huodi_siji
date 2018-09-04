@@ -848,7 +848,7 @@ public class HuoDSuYun1Fragment extends Fragment implements OnRefreshListener, O
                         final DrivePath drivePath = driveRouteResult.getPaths()
                                 .get(0);
                         double dis = drivePath.getDistance();
-                        java.text.DecimalFormat df = new java.text.DecimalFormat("#.00");
+                        java.text.DecimalFormat df = new java.text.DecimalFormat("###0.00");
                         BigDecimal b = new BigDecimal(dis / 1000);
 
 

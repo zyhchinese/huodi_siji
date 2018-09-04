@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
@@ -29,11 +30,16 @@ import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
 import com.amap.api.maps.AMap;
+import com.amap.api.maps.AMapUtils;
 import com.amap.api.maps.CameraUpdateFactory;
 import com.amap.api.maps.LocationSource;
 import com.amap.api.maps.MapView;
+import com.amap.api.maps.model.BitmapDescriptorFactory;
 import com.amap.api.maps.model.CameraPosition;
 import com.amap.api.maps.model.LatLng;
+import com.amap.api.maps.model.LatLngBounds;
+import com.amap.api.maps.model.Marker;
+import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.services.core.LatLonPoint;
 import com.amap.api.services.core.PoiItem;
 import com.amap.api.services.geocoder.GeocodeAddress;
@@ -51,6 +57,7 @@ import com.lxwls.hdsjd.R;
 import com.lxwls.hdsjd.adapter.MapPoiListViewDialogAdapter;
 import com.lxwls.hdsjd.api.PileApi;
 import com.lxwls.hdsjd.base.activity.BaseActivity;
+import com.lxwls.hdsjd.bean.MapBiaoShi;
 import com.lxwls.hdsjd.bean.mappoibean;
 import com.lxwls.hdsjd.bean.selectAllAreaBean;
 import com.lxwls.hdsjd.widgets.myListView;
@@ -65,6 +72,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -105,10 +113,17 @@ public class DeliverMapActivity extends BaseActivity implements SearchView.OnQue
     private ListView listView;
     private Double x = 0.0, y = 0.0;
     private String sx, sy;
+    private String p1,p2;
     private String shengid, shiid, xianid;
     private String dwsheng = "", dwshi = "", dwxian = "";
     private boolean xuanzhong11 = true;
     private String morendizhi = "";
+    private LinearLayout linear_zhongjian;
+    private GeocodeSearch geocoderSearch;
+    ArrayList<HashMap<String,String>> tujingchenshi=new ArrayList<>();
+    private int tujingnum=0;
+    private ArrayList<MapBiaoShi> mapBiaoShi=new ArrayList<>();
+    private int biaoshi;
 
     @Override
     protected int getContentView() {
@@ -142,6 +157,7 @@ public class DeliverMapActivity extends BaseActivity implements SearchView.OnQue
         listView = new ListView(this);
         img_back = (ImageView) findViewById(R.id.img_back);
         td = (ImageView) findViewById(R.id.td);
+        linear_zhongjian= (LinearLayout) findViewById(R.id.linear_zhongjian);
         //根据id-search_mag_icon获取ImageView
         int search_mag_icon_id = searchView.getContext().getResources().getIdentifier("android:id/search_mag_icon", null, null);
         ImageView mSearchViewIcon = (ImageView) searchView.findViewById(search_mag_icon_id);
@@ -155,27 +171,34 @@ public class DeliverMapActivity extends BaseActivity implements SearchView.OnQue
         });
         alertDialog = new AlertDialog.Builder(
                 this).create();
-        init();
+
         //起点终点的判断
         Intent intent = getIntent();
         String question = intent.getStringExtra("question");
         sy = sx = "";
+        p1 = p2 = "";
         sx = intent.getStringExtra("x");
         sy = intent.getStringExtra("y");
+        p1 = intent.getStringExtra("p1");
+        p2 = intent.getStringExtra("p2");
+        init();
         if ("qidian".equals(question)) {
             type = 0;
+            linear_zhongjian.setVisibility(View.VISIBLE);
             td.setImageResource(R.mipmap.qd);
             submit.setText("确认起点");
             tv_bianji.setText("存为常用发货起点");
         } else if ("zhongdian".equals(question)){
             type = 1;
+            linear_zhongjian.setVisibility(View.VISIBLE);
             td.setImageResource(R.mipmap.zd);
             submit.setText("确认终点");
             tv_bianji.setText("存为常用发货终点");
         }else {
             type = 10;
+            linear_zhongjian.setVisibility(View.GONE);
             td.setImageResource(R.mipmap.zd);
-            submit.setText("确认看车地址");
+            submit.setText("确认途径地点");
         }
         //如果是快运或者速运，做出相关处理（省市县）
         if (intent.getStringExtra("type") != null) {
@@ -297,82 +320,117 @@ public class DeliverMapActivity extends BaseActivity implements SearchView.OnQue
         {
             @Override
             public void onClick(View v) {
-                if (type1 == 4) {
-                    if (sheng_text.getText().toString().equals("请选择")) {
-                        Toast.makeText(DeliverMapActivity.this, "请选择省、市、区", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    if (shi_text.getText().toString().equals("请选择")) {
-                        Toast.makeText(DeliverMapActivity.this, "请选择省、市、区", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    if (xian_text.getText().toString().equals("请选择")) {
-                        Toast.makeText(DeliverMapActivity.this, "请选择省、市、区", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    if (type == 0) {
-                        SharedPreferences sp = getSharedPreferences("shengshixian1", Context.MODE_PRIVATE);
-                        SharedPreferences.Editor editor = sp.edit();
-                        editor.putString("shengname", sheng_text.getText().toString());
-                        editor.putString("shiname", shi_text.getText().toString());
-                        editor.putString("xianname", xian_text.getText().toString());
-                        editor.putString("shengid", shengid);
-                        editor.putString("shiid", shiid);
-                        editor.putString("xianid", xianid);
-                        editor.apply();
-                    } else if (type == 1) {
-                        SharedPreferences sp = getSharedPreferences("shengshixian2", Context.MODE_PRIVATE);
-                        SharedPreferences.Editor editor = sp.edit();
-                        editor.putString("shengname", sheng_text.getText().toString());
-                        editor.putString("shiname", shi_text.getText().toString());
-                        editor.putString("xianname", xian_text.getText().toString());
-                        editor.putString("shengid", shengid);
-                        editor.putString("shiid", shiid);
-                        editor.putString("xianid", xianid);
-                        editor.apply();
-                    }
-                    SharedPreferences sp = getSharedPreferences("chengshi", Context.MODE_PRIVATE);
-                    SharedPreferences.Editor editor = sp.edit();
-                    editor.putString("city", shi_text.getText().toString());
-                    editor.apply();
-                }
-
-                String myresult = map_text.getText().toString().trim();
-                if (type1 == 3 || type1 == 4) {
-                    myresult = sheng_text.getText().toString() + " " + shi_text.getText().toString() + " " + xian_text.getText().toString() + "\n" + myresult;
-
-                }
 
 
-                Intent intent = new Intent();
-                aMap.getCameraPosition();
-                intent.putExtra("myresuly", map_text.getText().toString().trim());
-                intent.putExtra("ssx1", sheng_text.getText().toString() + " " + shi_text.getText().toString() + " " + xian_text.getText().toString());
-                intent.putExtra("ssx", sheng_text.getText().toString() + "," + shi_text.getText().toString() + "," + xian_text.getText().toString());
-                intent.putExtra("shengid", shengid);
-                intent.putExtra("shiid", shiid);
-                intent.putExtra("xianid", xianid);
-                intent.putExtra("dwsheng", dwsheng);
-                intent.putExtra("dwshi", dwshi);
-                intent.putExtra("dwxian", dwxian);
-                intent.putExtra("x", x + "");
-                intent.putExtra("y", y + "");
-                intent.putExtra("address", ed_content.getText().toString());
 
-                intent.putExtra("morendizhi", morendizhi);
-                if (type == 0) {
-                    setResult(002, intent);
-                } else {
-                    if (type==10){
-                        setResult(333,intent);
+                if (type==10){
+                    showWaitDialog("加载中...");
+                    List<Marker> mapScreenMarkers = aMap.getMapScreenMarkers();
+//                    List<LatLng> paixu=new ArrayList<LatLng>();
+//                    for (int i = 0; i < mapScreenMarkers.size(); i++) {
+//                        float distance = AMapUtils.calculateLineDistance(mapScreenMarkers.get(i).getPosition(),new LatLng(Double.parseDouble(sx),Double.parseDouble(sy)));
+//                        if (i==0){
+//                            paixu.add(mapScreenMarkers.get(i).getPosition());
+//                        }else {
+//                            for (int j = 0; j < paixu.size(); j++) {
+//                                float distance1 = AMapUtils.calculateLineDistance(paixu.get(j),new LatLng(Double.parseDouble(sx),Double.parseDouble(sy)));
+//                                if (distance<=distance1){
+//                                    paixu.add(j,mapScreenMarkers.get(i).getPosition());
+//                                }
+//                            }
+//                        }
+//                    }
+                    type=11;
+                    if (mapBiaoShi.size()>0){
+                        LatLonPoint lp = new LatLonPoint(mapBiaoShi.get(0).getLatitude(), mapBiaoShi.get(0).getLongitude());
+                        RegeocodeQuery query = new RegeocodeQuery(lp, 200, GeocodeSearch.AMAP);
+                        geocoderSearch.getFromLocationAsyn(query);
                     }else {
-                        setResult(003, intent);
+                        finish();
+                        hideWaitDialog();
                     }
 
+                }else {
+                    if (type1 == 4) {
+                        if (sheng_text.getText().toString().equals("请选择")) {
+                            Toast.makeText(DeliverMapActivity.this, "请选择省、市、区", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if (shi_text.getText().toString().equals("请选择")) {
+                            Toast.makeText(DeliverMapActivity.this, "请选择省、市、区", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if (xian_text.getText().toString().equals("请选择")) {
+                            Toast.makeText(DeliverMapActivity.this, "请选择省、市、区", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        if (type == 0) {
+                            SharedPreferences sp = getSharedPreferences("shengshixian1", Context.MODE_PRIVATE);
+                            SharedPreferences.Editor editor = sp.edit();
+                            editor.putString("shengname", sheng_text.getText().toString());
+                            editor.putString("shiname", shi_text.getText().toString());
+                            editor.putString("xianname", xian_text.getText().toString());
+                            editor.putString("shengid", shengid);
+                            editor.putString("shiid", shiid);
+                            editor.putString("xianid", xianid);
+                            editor.apply();
+                        } else if (type == 1) {
+                            SharedPreferences sp = getSharedPreferences("shengshixian2", Context.MODE_PRIVATE);
+                            SharedPreferences.Editor editor = sp.edit();
+                            editor.putString("shengname", sheng_text.getText().toString());
+                            editor.putString("shiname", shi_text.getText().toString());
+                            editor.putString("xianname", xian_text.getText().toString());
+                            editor.putString("shengid", shengid);
+                            editor.putString("shiid", shiid);
+                            editor.putString("xianid", xianid);
+                            editor.apply();
+                        }
+                        SharedPreferences sp = getSharedPreferences("chengshi", Context.MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sp.edit();
+                        editor.putString("city", shi_text.getText().toString());
+                        editor.apply();
+                    }
+
+                    String myresult = map_text.getText().toString().trim();
+                    if (type1 == 3 || type1 == 4) {
+                        myresult = sheng_text.getText().toString() + " " + shi_text.getText().toString() + " " + xian_text.getText().toString() + "\n" + myresult;
+
+                    }
+
+
+
+
+                    Intent intent = new Intent();
+                    aMap.getCameraPosition();
+                    intent.putExtra("myresuly", map_text.getText().toString().trim());
+                    intent.putExtra("ssx1", sheng_text.getText().toString() + " " + shi_text.getText().toString() + " " + xian_text.getText().toString());
+                    intent.putExtra("ssx", sheng_text.getText().toString() + "," + shi_text.getText().toString() + "," + xian_text.getText().toString());
+                    intent.putExtra("shengid", shengid);
+                    intent.putExtra("shiid", shiid);
+                    intent.putExtra("xianid", xianid);
+                    intent.putExtra("dwsheng", dwsheng);
+                    intent.putExtra("dwshi", dwshi);
+                    intent.putExtra("dwxian", dwxian);
+                    intent.putExtra("x", x + "");
+                    intent.putExtra("y", y + "");
+                    intent.putExtra("address", ed_content.getText().toString());
+
+                    intent.putExtra("morendizhi", morendizhi);
+                    if (type == 0) {
+                        setResult(002, intent);
+                    } else {
+                        if (type==10){
+                            setResult(333,intent);
+                        }else {
+                            setResult(003, intent);
+                        }
+
+                    }
+
+                    finish();
                 }
 
-                finish();
             }
         });
 
@@ -647,7 +705,7 @@ public class DeliverMapActivity extends BaseActivity implements SearchView.OnQue
      * 初始化AMap对象
      */
     private void init() {
-        final GeocodeSearch geocoderSearch = new GeocodeSearch(this);
+        geocoderSearch = new GeocodeSearch(this);
         geocoderSearch.setOnGeocodeSearchListener(new GeocodeSearch.OnGeocodeSearchListener() {
 
             @Override
@@ -671,7 +729,64 @@ public class DeliverMapActivity extends BaseActivity implements SearchView.OnQue
                     if (type1 == 3) {
                         map_text.setText(dwsheng + dwshi + dwxian);
                     } else {
-                        map_text.setText(formatAddress);
+                        map_text.setText(dwsheng + dwshi + dwxian);
+                    }
+
+                    if (type==10){
+                        View view= LayoutInflater.from(DeliverMapActivity.this).inflate(R.layout.shunfengche_qidian,null,false);
+                        TextView tv_name= (TextView) view.findViewById(R.id.tv_name);
+                        ImageView img_icon= (ImageView) view.findViewById(R.id.img_icon);
+                        tv_name.setText(dwshi+dwxian);
+                        img_icon.setImageResource(R.mipmap.img_huoditujingdidian456);
+                        MarkerOptions markerOptions1 = new MarkerOptions();
+                        markerOptions1.position(new LatLng(result.getRegeocodeQuery().getPoint().getLatitude(), result.getRegeocodeQuery().getPoint().getLongitude()))
+                                .icon(BitmapDescriptorFactory.fromView(view));
+                        aMap.addMarker(markerOptions1);
+
+                        aMap.setOnMarkerClickListener(new AMap.OnMarkerClickListener() {
+                            @Override
+                            public boolean onMarkerClick(Marker marker) {
+//                                marker.destroy();
+                                marker.remove();
+                                for (MapBiaoShi mapBiaoShis:mapBiaoShi){
+                                    if (marker.getPosition().latitude==mapBiaoShis.getLatitude()&&
+                                            marker.getPosition().longitude==mapBiaoShis.getLongitude()){
+                                        mapBiaoShi.remove(mapBiaoShis);
+                                    }
+                                }
+                                return true;
+                            }
+                        });
+                        MapBiaoShi mapBiaoShis=new MapBiaoShi();
+                        mapBiaoShis.setTag(biaoshi++);
+                        mapBiaoShis.setLatitude(result.getRegeocodeQuery().getPoint().getLatitude());
+                        mapBiaoShis.setLongitude(result.getRegeocodeQuery().getPoint().getLongitude());
+                        mapBiaoShi.add(mapBiaoShis);
+
+                    }
+
+                    if (type==11){
+                        tujingnum++;
+
+                        HashMap<String,String> hashMap=new HashMap<String, String>();
+                        hashMap.put("douhao",dwsheng+dwshi+dwxian+",");
+                        hashMap.put("xinghaodouhao",dwsheng+"*"+dwshi+"*"+dwxian+",");
+                        hashMap.put("douhao1",dwshi+dwxian+",");
+                        tujingchenshi.add(hashMap);
+
+                        List<Marker> mapScreenMarkers = aMap.getMapScreenMarkers();
+                        if (tujingnum<=mapBiaoShi.size()-1){
+                            LatLonPoint lp = new LatLonPoint(mapBiaoShi.get(tujingnum).getLatitude(), mapBiaoShi.get(tujingnum).getLongitude());
+                            RegeocodeQuery query = new RegeocodeQuery(lp, 200, GeocodeSearch.AMAP);
+                            geocoderSearch.getFromLocationAsyn(query);
+                        }else {
+                            Intent intent=new Intent();
+                            intent.putExtra("tujingchenshi",tujingchenshi);
+                            setResult(10000,intent);
+                            finish();
+                            hideWaitDialog();
+                        }
+
                     }
                 } else {
                     map_text.setText("正在获取地址信息...");
@@ -690,13 +805,16 @@ public class DeliverMapActivity extends BaseActivity implements SearchView.OnQue
         aMap.setOnCameraChangeListener(new AMap.OnCameraChangeListener() {
             @Override
             public void onCameraChange(CameraPosition cameraPosition) {
-                LatLng target = cameraPosition.target;
-                x = target.latitude;
-                y = target.longitude;
-                System.out.println(target.latitude + "jinjin------" + target.longitude);
-                LatLonPoint lp = new LatLonPoint(target.latitude, target.longitude);
-                RegeocodeQuery query = new RegeocodeQuery(lp, 200, GeocodeSearch.AMAP);
-                geocoderSearch.getFromLocationAsyn(query);
+                if (type!=10){
+                    LatLng target = cameraPosition.target;
+                    x = target.latitude;
+                    y = target.longitude;
+                    System.out.println(target.latitude + "jinjin------" + target.longitude);
+                    LatLonPoint lp = new LatLonPoint(target.latitude, target.longitude);
+                    RegeocodeQuery query = new RegeocodeQuery(lp, 200, GeocodeSearch.AMAP);
+                    geocoderSearch.getFromLocationAsyn(query);
+                }
+
 
             }
 
@@ -714,6 +832,11 @@ public class DeliverMapActivity extends BaseActivity implements SearchView.OnQue
             public void onMapClick(LatLng latLng) {
                 menu_main.setVisibility(View.GONE);
                 searchView.setQuery("", false);
+                if (type==10){
+                    LatLonPoint lp = new LatLonPoint(latLng.latitude, latLng.longitude);
+                    RegeocodeQuery query = new RegeocodeQuery(lp, 200, GeocodeSearch.AMAP);
+                    geocoderSearch.getFromLocationAsyn(query);
+                }
             }
         });
     }
@@ -884,7 +1007,7 @@ public class DeliverMapActivity extends BaseActivity implements SearchView.OnQue
                     //点击定位按钮 能够将地图的中心移动到定位点
                     // mListener.onLocationChanged(aMapLocation);
                     //添加图钉
-                    //  aMap.addMarker(getMarkerOptions(amapLocation));
+//                      aMap.addMarker(getMarkerOptions(amapLocation));
                     //获取定位信息
                     StringBuffer buffer = new StringBuffer();
                     buffer.append(aMapLocation.getCountry() + ""
@@ -901,6 +1024,41 @@ public class DeliverMapActivity extends BaseActivity implements SearchView.OnQue
                         //将地图移动到定位点
                         aMap.moveCamera(CameraUpdateFactory.changeLatLng(new LatLng(Double.parseDouble(sx), Double.parseDouble(sy))));
                     }
+                    if (type==10){
+                        if (sx != null && sy != null&&p1!=null&&p2!=null) {
+                            View view1= LayoutInflater.from(DeliverMapActivity.this).inflate(R.layout.shunfengche_qidian,null,false);
+                            TextView tv_name1= (TextView) view1.findViewById(R.id.tv_name);
+                            ImageView img_icon1= (ImageView) view1.findViewById(R.id.img_icon);
+                            tv_name1.setText("起点");
+                            img_icon1.setImageResource(R.mipmap.kuaiyun_qidian);
+                            MarkerOptions markerOptions = new MarkerOptions();
+                            markerOptions.position(new LatLng(Double.parseDouble(sx), Double.parseDouble(sy)))
+                            .icon(BitmapDescriptorFactory.fromView(view1));
+                            Marker marker = aMap.addMarker(markerOptions);
+                            marker.setClickable(false);
+
+                            View view= LayoutInflater.from(DeliverMapActivity.this).inflate(R.layout.shunfengche_qidian,null,false);
+                            TextView tv_name= (TextView) view.findViewById(R.id.tv_name);
+                            ImageView img_icon= (ImageView) view.findViewById(R.id.img_icon);
+                            tv_name.setText("终点");
+                            img_icon.setImageResource(R.mipmap.kuaiyun_zhongdian);
+                            MarkerOptions markerOptions1 = new MarkerOptions();
+                            markerOptions1.position(new LatLng(Double.parseDouble(p1), Double.parseDouble(p2)))
+                            .icon(BitmapDescriptorFactory.fromView(view));
+                            Marker marker1 = aMap.addMarker(markerOptions1);
+                            marker1.setClickable(false);
+
+                            LatLngBounds bounds=new LatLngBounds.Builder()
+                                    .include(new LatLng(Double.parseDouble(sx), Double.parseDouble(sy)))
+                                    .include(new LatLng(Double.parseDouble(p1), Double.parseDouble(p2)))
+                                    .build();
+                            aMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds,100));
+//                            //设置缩放级别
+//                            aMap.moveCamera(CameraUpdateFactory.zoomTo(17));
+//                            //将地图移动到定位点
+//                            aMap.moveCamera(CameraUpdateFactory.changeLatLng(new LatLng(Double.parseDouble(sx), Double.parseDouble(sy))));
+                        }
+                    }
 // else {
 //                        getLatlon(aMapLocation.getCity() + "");
 //                    }
@@ -909,7 +1067,7 @@ public class DeliverMapActivity extends BaseActivity implements SearchView.OnQue
                     if (type1 == 3) {
                         map_text.setText(dwsheng + dwshi + dwxian);
                     } else {
-                        map_text.setText(buffer.toString());
+                        map_text.setText(dwsheng + dwshi + dwxian);
                     }
                     //Toast.makeText(getApplicationContext(), buffer.toString(), Toast.LENGTH_LONG).show();
                 }
